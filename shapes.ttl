@@ -1,0 +1,82 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix ex: <http://example.org/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Shape to validate ex:Candidate
+ex:CandidateShape a sh:NodeShape ;
+    sh:targetClass ex:Candidate ;  # Apply to all ex:Candidate instances
+    sh:property [
+        sh:path foaf:name ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;  # foaf:name is required
+    ] ;
+    sh:property [
+        sh:path foaf:age ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 18 ;  # Minimum age is 18
+    ] ;
+    sh:property [
+        sh:path ex:hasTitle ;
+        sh:datatype xsd:string ;
+        sh:maxCount 1 ;  # At most one title per candidate
+    ] ;
+    sh:property [
+        sh:path ex:hasProfession ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;  # Profession is required
+    ] ;
+    sh:property [
+        sh:path ex:hasPoliticalAffiliation ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;  # Political affiliation is required
+    ] ;
+    sh:property [
+        sh:path ex:hasMunicipality ;
+        sh:node ex:MunicipalityShape ;  # Validate municipalities linked to candidates
+        sh:minCount 1 ;  # Candidate must be linked to at least one municipality
+    ] ;
+    sh:property [
+        sh:path ex:partOfElection ;
+        sh:node ex:ElectionShape ;  # Validate elections linked to candidates
+        sh:minCount 1 ;  # Candidate must participate in at least one election
+    ] ;
+    sh:property [
+        sh:path ex:receivedVotes ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 0 ;  # Votes must be non-negative
+    ] .
+
+# Shape to validate ex:Municipality
+ex:MunicipalityShape a sh:NodeShape ;
+    sh:targetClass ex:Municipality ;  # Apply to all ex:Municipality instances
+    sh:property [
+        sh:path ex:wasElected ;
+        sh:node ex:CandidateShape ;  # Validate candidates linked to municipalities
+        sh:minCount 1 ;  # At least one elected candidate per municipality
+    ] .
+
+# Shape to validate ex:Election
+ex:ElectionShape a sh:NodeShape ;
+    sh:targetClass ex:Election ;  # Apply to all ex:Election instances
+    sh:property [
+        sh:path ex:hasRegion ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;  # Region is required for elections
+    ] .
+
+# Validate RDF dataset as a whole
+ex:DatasetShape a sh:NodeShape ;
+    sh:targetNode <http://example.org/dataset> ;  # Validate the entire dataset
+    sh:property [
+        sh:path ex:CandidateShape ;
+        sh:nodeKind sh:IRI ;  # Ensure candidates have unique IRIs
+    ] ;
+    sh:property [
+        sh:path ex:MunicipalityShape ;
+        sh:nodeKind sh:IRI ;  # Ensure municipalities have unique IRIs
+    ] ;
+    sh:property [
+        sh:path ex:ElectionShape ;
+        sh:nodeKind sh:IRI ;  # Ensure elections have unique IRIs
+    ] .
